@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { sendNotImplementedWith } = require('./middlewares/error-responses');
+const { sendNotImplementedWith } = require('../middlewares/error-responses');
 
 const reviewsRouter = express.Router();
 
