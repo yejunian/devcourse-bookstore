@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "format": "prettier . --write"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -11,5 +12,8 @@
     "express-validator": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.9.7"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
   }
 }
