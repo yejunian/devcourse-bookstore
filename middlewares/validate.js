@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const { StatusCodes } = require('http-status-codes');
 
 const validate = (req, res, next) => {
   const err = validationResult(req);
@@ -6,7 +7,7 @@ const validate = (req, res, next) => {
   if (err.isEmpty()) {
     return next();
   } else {
-    return res.status(400).end();
+    return res.status(StatusCodes.BAD_REQUEST).json(err.array());
   }
 };
 
