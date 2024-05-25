@@ -1,23 +1,11 @@
 const booksModel = require('../models/books');
 
 module.exports.readPage = async (query) => {
-  const records = await booksModel.readPage(query);
+  const result = await booksModel.readPage(query);
 
-  const books = records.map((record) => ({
-    ...record,
-    // TODO - 개별 도서의 좋아요 수
-    // likeCount: number,
-  }));
+  // TODO - 개별 도서의 좋아요 수 포함
 
-  return {
-    // TODO - 페이지 정보
-    // totalCount: number,
-    // page: {
-    //   total: number,
-    //   current: number,
-    // },
-    books,
-  };
+  return result;
 };
 
 module.exports.read = async (bookId) => {
