@@ -1,19 +1,82 @@
+const cookie = require('cookie');
 const express = require('express');
+const jwt = require('jsonwebtoken');
 
-const { sendNotImplementedWith } = require('../middlewares/error-responses');
+const envConfig = require('../config/env');
+const likesService = require('../services/likes');
+const { StatusCodes } = require('http-status-codes');
 
 const likesRouter = express.Router();
 
 likesRouter
   .route('/:bookId')
 
-  // TODO - 개별 도서의 좋아요 수 조회 구현
-  .get(sendNotImplementedWith('개별 도서의 좋아요 수 조회'))
+  .get(async (req, res) => {
+    const { token } = cookie.parse(req.headers.cookie);
 
-  // TODO - 개별 회원의 개별 도서 좋아요 활성화 구현
-  .post(sendNotImplementedWith('개별 회원의 개별 도서 좋아요 활성화'))
+    let email;
+    try {
+      ({ email } = jwt.verify(token, envConfig.jwt.secret));
+    } catch (err) {
+      email = '';
+    }
 
-  // TODO - 개별 회원의 개별 도서 좋아요 취소 구현
-  .delete(sendNotImplementedWith('개별 회원의 개별 도서 좋아요 취소'));
+    const bookId = parseInt(req.params.bookId);
+    const result = await likesService.readLikeCount(bookId, email);
+
+    return res.status(StatusCodes.OK).json(result);
+  })
+
+  .post(async (req, res) => {
+    const { token } = cookie.parse(req.headers.cookie);
+
+    let email;
+    try {
+      ({ email } = jwt.verify(token, envConfig.jwt.secret));
+    } catch (err) {
+      // TODO - 토큰 만료 메시지를 분리해야 할까?
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        reasons: ['header : unauthorized'],
+      });
+    }
+
+    const bookId = parseInt(req.params.bookId);
+    const success = await likesService.createLike(email, bookId);
+
+    if (!success) {
+      // TODO - 실패 원인 분리 필요
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        reasons: ['params.bookId : bad request'],
+      });
+    }
+
+    return res.status(StatusCodes.CREATED).end();
+  })
+
+  .delete(async (req, res) => {
+    const { token } = cookie.parse(req.headers.cookie);
+
+    let email;
+    try {
+      ({ email } = jwt.verify(token, envConfig.jwt.secret));
+    } catch (err) {
+      // TODO - 토큰 만료 메시지를 분리해야 할까?
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        reasons: ['header : unauthorized'],
+      });
+    }
+
+    const bookId = parseInt(req.params.bookId);
+    const success = await likesService.deleteLike(email, bookId);
+
+    if (!success) {
+      // TODO - 실패 원인 분리 필요
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        reasons: ['params.bookId : bad request'],
+      });
+    }
+
+    return res.status(StatusCodes.OK).end();
+  });
 
 module.exports = likesRouter;

@@ -33,6 +33,7 @@ module.exports = {
   books: {
     '/': {
       GET: [
+        // TODO - 오류 메시지
         query('keyword').optional().notEmpty(),
         query('category').optional().notEmpty(),
         query('new').optional().isBoolean(),
@@ -43,6 +44,20 @@ module.exports = {
     },
     '/:bookId': {
       GET: [param('bookId').isInt().withMessage(errorMessages.isInt), validate],
+    },
+  },
+
+  likes: {
+    '/:bookId': {
+      GET: [param('bookId').isInt().withMessage(errorMessages.isInt), validate],
+      POST: [
+        param('bookId').isInt().withMessage(errorMessages.isInt),
+        validate,
+      ],
+      DELETE: [
+        param('bookId').isInt().withMessage(errorMessages.isInt),
+        validate,
+      ],
     },
   },
 

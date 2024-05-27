@@ -13,7 +13,14 @@ module.exports.readPage = async ({
 }) => {
   const contentSqlFragments = [
     `SELECT
-      b.*, i.url AS thumbnail_url
+      b.*,
+      i.url AS thumbnail_url,
+      (SELECT
+          COUNT(*)
+        FROM
+          likes
+        WHERE
+          likes.book_id = b.id) AS like_count
     FROM
       books AS b
         LEFT JOIN
@@ -76,17 +83,33 @@ module.exports.readPage = async ({
       thumbnail: record.thumbnail_url,
       title: record.title,
       author: record.author,
-      excerpt: record.excerpt,
       price: record.price,
       pubDate: record.pub_date,
+      likes: record.like_count,
+      excerpt: record.excerpt,
     })),
   };
 };
 
-module.exports.read = async (bookId) => {
+module.exports.read = async (bookId, email) => {
   const sql = `
     SELECT
-      b.*, i.url AS thumbnail_url
+      b.*,
+      i.url AS thumbnail_url,
+      (SELECT
+          COUNT(*)
+        FROM
+          likes
+        WHERE
+          book_id = ?) AS like_count,
+      (EXISTS( SELECT
+          *
+        FROM
+          likes AS l
+            LEFT JOIN
+          users AS u ON u.email = ?
+        WHERE
+          l.user_id = u.id AND book_id = ?)) AS user_liked
     FROM
       books AS b
         LEFT JOIN
@@ -94,7 +117,7 @@ module.exports.read = async (bookId) => {
     WHERE
       b.id = ?
     LIMIT 1`;
-  const values = [bookId];
+  const values = [bookId, email, bookId, bookId];
 
   let results;
 
@@ -121,6 +144,8 @@ module.exports.read = async (bookId) => {
     isbn: bookRecord.isbn,
     pages: bookRecord.pages,
     price: bookRecord.price,
+    likes: bookRecord.like_count,
+    userLiked: bookRecord.user_liked === 1,
     thumbnail: bookRecord.thumbnail_url,
     excerpt: bookRecord.excerpt,
     toc: bookRecord.toc,
