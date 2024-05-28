@@ -47,6 +47,16 @@ module.exports = {
     },
   },
 
+  cart: {
+    '/': {
+      POST: [
+        body('bookId').isInt({ min: 1 }).withMessage(errorMessages.isInt),
+        body('quantity').isInt({ min: 1 }).withMessage(errorMessages.isInt),
+        validate,
+      ],
+    },
+  },
+
   likes: {
     '/:bookId': {
       GET: [param('bookId').isInt().withMessage(errorMessages.isInt), validate],
@@ -56,6 +66,21 @@ module.exports = {
       ],
       DELETE: [
         param('bookId').isInt().withMessage(errorMessages.isInt),
+        validate,
+      ],
+    },
+  },
+
+  'pending-orders': {
+    '/': {
+      // TODO - 오류 메시지
+      POST: [body('cartItems').isArray({ min: 1 }), validate],
+    },
+    '/:pendingOrderId': {
+      GET: [
+        param('pendingOrderId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isInt),
         validate,
       ],
     },
