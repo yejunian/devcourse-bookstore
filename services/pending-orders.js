@@ -13,19 +13,17 @@ module.exports.read = async (email, pendingOrderId) => {
 };
 
 module.exports.create = async (email, items) => {
-  const isPendingOrderCreated = await pendingOrdersModel.create(email);
+  const pendingOrderId = await pendingOrdersModel.create(email);
 
-  if (!isPendingOrderCreated) {
+  if (!pendingOrderId) {
     return false;
   }
 
-  const records = await pendingOrdersModel.createItems(email, items);
+  const success = await pendingOrdersModel.createItems(
+    email,
+    items,
+    pendingOrderId
+  );
 
-  if (!records?.length) {
-    return false;
-  }
-
-  return {
-    items: records,
-  };
+  return success;
 };

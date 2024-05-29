@@ -65,30 +65,31 @@ module.exports.create = async (email) => {
     return false;
   }
 
-  return results.affectedRows !== 0;
+  if (!results?.affectedRows) {
+    return false;
+  }
+
+  return results.insertId;
 };
 
-module.exports.createItems = async (email, items) => {
+module.exports.createItems = async (email, items, pendingOrderId) => {
   const sql = `
     INSERT INTO
       pending_order_items (pending_order_id, book_id, unit_price, quantity)
     SELECT
-      p.id AS pending_order_id,
-      c.book_id,
-      b.price AS unit_price,
-      c.count AS quantity
+      ?,
+      cart_items.book_id,
+      books.price,
+      cart_items.count
     FROM
-      users AS u
-    INNER JOIN pending_orders AS p
-      ON u.id = p.user_id
-      AND u.email = ?
-    INNER JOIN cart_items AS c
-      ON u.id = c.user_id
-      AND c.book_id IN (?)
-    INNER JOIN books AS b
-      ON c.book_id = b.id
+      users
+    INNER JOIN cart_items
+      ON users.id = cart_items.user_id
+      AND cart_items.book_id IN (?)
+    INNER JOIN books
+      ON cart_items.book_id = books.id
   `;
-  const values = [email, items];
+  const values = [pendingOrderId, email, items];
 
   let results;
 
