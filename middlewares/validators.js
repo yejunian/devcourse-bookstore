@@ -2,11 +2,16 @@ const { body, param, query } = require('express-validator');
 
 const validate = require('./validate');
 
+const paymentTypes = ['card', 'mobile-payment', 'without-bankbook'];
+
 const errorMessages = {
-  notEmpty: 'omitted',
+  isBoolean: 'not boolean',
   isEmail: 'not email format',
-  isInt: 'not integer',
+  isNonNegativeInt: 'not non-negative integer',
+  isPaymentType: `not in ["${paymentTypes.join('", "')}"]`,
+  isPositiveInt: 'not positive integer',
   isString: 'not string',
+  notEmpty: 'omitted',
 };
 
 module.exports = {
@@ -15,10 +20,10 @@ module.exports = {
       POST: [
         body('email').isEmail().withMessage(errorMessages.isEmail),
         body('password')
-          .notEmpty()
-          .withMessage(errorMessages.notEmpty)
           .isString()
-          .withMessage(errorMessages.isString),
+          .withMessage(errorMessages.isString)
+          .notEmpty()
+          .withMessage(errorMessages.notEmpty),
         validate,
       ],
     },
@@ -33,25 +38,37 @@ module.exports = {
   books: {
     '/': {
       GET: [
-        // TODO - 오류 메시지
-        query('keyword').optional().notEmpty(),
-        query('category').optional().notEmpty(),
-        query('new').optional().isBoolean(),
-        query('page').optional().isInt({ min: 1 }),
-        query('page-size').optional().isInt({ min: 1 }),
+        query(['keyword', 'category'])
+          .optional()
+          .notEmpty()
+          .withMessage(errorMessages.notEmpty),
+        query('new')
+          .optional()
+          .isBoolean()
+          .withMessage(errorMessages.isBoolean),
+        query('page', 'page-size')
+          .optional()
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
         validate,
       ],
     },
     '/:bookId': {
-      GET: [param('bookId').isInt().withMessage(errorMessages.isInt), validate],
+      GET: [
+        param('bookId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        validate,
+      ],
     },
   },
 
   cart: {
     '/': {
       POST: [
-        body('bookId').isInt({ min: 1 }).withMessage(errorMessages.isInt),
-        body('quantity').isInt({ min: 1 }).withMessage(errorMessages.isInt),
+        body(['bookId', 'quantity'])
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
         validate,
       ],
     },
@@ -59,13 +76,45 @@ module.exports = {
 
   likes: {
     '/:bookId': {
-      GET: [param('bookId').isInt().withMessage(errorMessages.isInt), validate],
+      GET: [
+        param('bookId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        validate,
+      ],
       POST: [
-        param('bookId').isInt().withMessage(errorMessages.isInt),
+        param('bookId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
         validate,
       ],
       DELETE: [
-        param('bookId').isInt().withMessage(errorMessages.isInt),
+        param('bookId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        validate,
+      ],
+    },
+  },
+
+  orders: {
+    '/': {
+      // GET: [],
+      POST: [
+        body('pendingOrderId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        body(['receiver.address', 'receiver.name', 'receiver.phone'])
+          .isString()
+          .withMessage(errorMessages.isString)
+          .notEmpty()
+          .withMessage(errorMessages.notEmpty),
+        body('payment.type')
+          .isIn(paymentTypes)
+          .withMessage(errorMessages.isPaymentType),
+        body('payment.amount')
+          .isInt({ min: 0 })
+          .withMessage(errorMessages.isNonNegativeInt),
         validate,
       ],
     },
@@ -73,14 +122,18 @@ module.exports = {
 
   'pending-orders': {
     '/': {
-      // TODO - 오류 메시지
-      POST: [body('cartItems').isArray({ min: 1 }), validate],
+      POST: [
+        body('cartItems')
+          .isArray({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        validate,
+      ],
     },
     '/:pendingOrderId': {
       GET: [
         param('pendingOrderId')
           .isInt({ min: 1 })
-          .withMessage(errorMessages.isInt),
+          .withMessage(errorMessages.isPositiveInt),
         validate,
       ],
     },
@@ -91,19 +144,19 @@ module.exports = {
       POST: [
         body('email').isEmail().withMessage(errorMessages.isEmail),
         body('password')
-          .notEmpty()
-          .withMessage(errorMessages.notEmpty)
           .isString()
-          .withMessage(errorMessages.isString),
+          .withMessage(errorMessages.isString)
+          .notEmpty()
+          .withMessage(errorMessages.notEmpty),
         validate,
       ],
       PUT: [
         body('email').isEmail().withMessage(errorMessages.isEmail),
         body('password')
-          .notEmpty()
-          .withMessage(errorMessages.notEmpty)
           .isString()
-          .withMessage(errorMessages.isString),
+          .withMessage(errorMessages.isString)
+          .notEmpty()
+          .withMessage(errorMessages.notEmpty),
         validate,
       ],
     },
