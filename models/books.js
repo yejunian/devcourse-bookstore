@@ -66,7 +66,6 @@ module.exports.readPage = async ({
     [countResults] = await conn.promise().query(countSql, countSqlValue);
   } catch (err) {
     // TODO - DB 에러
-    console.log(err);
     return false;
   }
 
@@ -125,7 +124,6 @@ module.exports.read = async (bookId, email) => {
     [results] = await conn.promise().query(sql, values);
   } catch (err) {
     // TODO - DB 에러
-    console.log(err);
     return false;
   }
 
@@ -170,7 +168,6 @@ module.exports.readImagesByBookId = async (bookId) => {
     [results] = await conn.promise().query(sql, values);
   } catch (err) {
     // TODO - DB 에러
-    console.log(err);
     return false;
   }
 

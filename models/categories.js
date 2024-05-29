@@ -14,7 +14,6 @@ module.exports.readAll = async () => {
     [results] = await conn.promise().query(sql);
   } catch (err) {
     // TODO - DB 에러
-    console.log(err);
     return false;
   }
 

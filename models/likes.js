@@ -24,7 +24,6 @@ module.exports.readLikeCount = async (bookId, email) => {
     [results] = await conn.promise().query(sql, values);
   } catch (err) {
     // TODO - DB 에러
-    console.log(err);
     return false;
   }
 
