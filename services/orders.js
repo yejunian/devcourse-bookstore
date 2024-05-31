@@ -1,4 +1,6 @@
+const cartModel = require('../models/cart');
 const ordersModel = require('../models/orders');
+const pendingOrdersModel = require('../models/pending-orders');
 
 module.exports.read = async (email) => {
   const result = await ordersModel.read(email);
@@ -8,15 +10,17 @@ module.exports.read = async (email) => {
 
 module.exports.create = async (email, order) => {
   const orderId = await ordersModel.create(email, order);
-
   if (typeof orderId !== 'number') {
     return false;
   }
 
-  const success = await ordersModel.createItems(email, order, orderId);
+  const creationSuccess = await ordersModel.createItems(order, orderId);
+  if (!creationSuccess) {
+    return false;
+  }
 
-  // TODO - id가 `order.pendingOrderId`인 주문 대기 삭제 (개별 항목, 목록)
-  // TODO - 장바구니에서 구매한 항목과 수량이 일치하는 항목 삭제
+  await cartModel.deleteOrdered(order.pendingOrderId);
+  await pendingOrdersModel.delete(order.pendingOrderId);
 
-  return success;
+  return creationSuccess;
 };

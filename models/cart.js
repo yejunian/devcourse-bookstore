@@ -67,3 +67,32 @@ module.exports.createWithEmail = async (email, item) => {
 
   return results.affectedRows !== 0;
 };
+
+module.exports.deleteOrdered = async (pendingOrderId) => {
+  const sql = `
+    DELETE cart_items
+    FROM
+      pending_orders
+    INNER JOIN
+      pending_order_items
+      ON pending_orders.id = pending_order_items.pending_order_id
+      AND pending_orders.id = ?
+    INNER JOIN
+      cart_items
+      ON pending_orders.user_id = cart_items.user_id
+      AND pending_order_items.book_id = cart_items.book_id
+      AND pending_order_items.quantity = cart_items.count
+  `;
+  const values = [pendingOrderId];
+
+  let results;
+
+  try {
+    [results] = await conn.promise().query(sql, values);
+  } catch (err) {
+    // TODO - DB 에러
+    return false;
+  }
+
+  return true;
+};

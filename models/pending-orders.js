@@ -102,3 +102,51 @@ module.exports.createItems = async (email, items, pendingOrderId) => {
 
   return results.affectedRows !== 0;
 };
+
+module.exports.delete = async (pendingOrderId) => {
+  const itemDeletionSql = `
+    DELETE
+    FROM
+      pending_order_items
+    WHERE
+      pending_order_id = ?
+  `;
+  const itemDeletionValues = [pendingOrderId];
+
+  let itemDeletionResults;
+
+  try {
+    [itemDeletionResults] = await conn
+      .promise()
+      .query(itemDeletionSql, itemDeletionValues);
+  } catch (err) {
+    // TODO - DB 에러
+    return false;
+  }
+
+  if (!itemDeletionResults.affectedRows) {
+    return false;
+  }
+
+  const idDeletionSql = `
+    DELETE
+    FROM
+      pending_orders
+    WHERE
+      id = ?
+  `;
+  const idDeletionValues = [pendingOrderId];
+
+  let idDeletionResults;
+
+  try {
+    [idDeletionResults] = await conn
+      .promise()
+      .query(idDeletionSql, idDeletionValues);
+  } catch (err) {
+    // TODO - DB 에러
+    return false;
+  }
+
+  return idDeletionResults.affectedRows !== 0;
+};

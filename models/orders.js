@@ -145,7 +145,7 @@ module.exports.create = async (email, data) => {
   return results.insertId;
 };
 
-module.exports.createItems = async (email, items, orderId) => {
+module.exports.createItems = async (items, orderId) => {
   const sql = `
     INSERT INTO
       order_items (order_id, book_id, unit_price, quantity)
@@ -163,7 +163,7 @@ module.exports.createItems = async (email, items, orderId) => {
     INNER JOIN books
       ON pending_items.book_id = books.id
   `;
-  const values = [orderId, email, items.pendingOrderId];
+  const values = [orderId, items.pendingOrderId];
 
   let results;
 
