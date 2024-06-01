@@ -24,7 +24,7 @@ ordersRouter
       });
     }
 
-    const result = await ordersService.read(email);
+    const result = await ordersService.readAll(email);
 
     // TODO - 실패 원인 세분화
     if (!result?.orders?.length) {
@@ -58,6 +58,34 @@ ordersRouter
     }
 
     return res.status(StatusCodes.CREATED).end();
+  });
+
+ordersRouter
+  .route('/:orderId')
+
+  .get(validators.orders['/:orderId'].GET, async (req, res) => {
+    const { token } = cookie.parse(req.headers.cookie);
+
+    let email;
+    try {
+      ({ email } = jwt.verify(token, envConfig.jwt.secret));
+    } catch (err) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        reasons: ['header : unauthorized'],
+      });
+    }
+
+    const orderId = parseInt(req.params.orderId);
+    const result = await ordersService.readItems(email, orderId);
+
+    // TODO - 실패 원인 세분화
+    if (!result?.items?.length) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        reasons: ['request : bad request'],
+      });
+    }
+
+    return res.status(StatusCodes.OK).json(result);
   });
 
 module.exports = ordersRouter;

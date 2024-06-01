@@ -2,10 +2,18 @@ const cartModel = require('../models/cart');
 const ordersModel = require('../models/orders');
 const pendingOrdersModel = require('../models/pending-orders');
 
-module.exports.read = async (email) => {
-  const result = await ordersModel.read(email);
+module.exports.readAll = async (email) => {
+  const result = await ordersModel.readAll(email);
 
   return result;
+};
+
+module.exports.readItems = async (email, orderId) => {
+  const result = await ordersModel.read(email, orderId);
+
+  return {
+    items: result,
+  };
 };
 
 module.exports.create = async (email, order) => {

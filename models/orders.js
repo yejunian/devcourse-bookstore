@@ -1,7 +1,7 @@
 const conn = require('../database/connect/mariadb');
 
-module.exports.read = async (email) => {
-  const orderSql = `
+module.exports.readAll = async (email) => {
+  const sql = `
     SELECT
       orders.id AS order_id,
       orders.created_at AS order_created_at,
@@ -28,42 +28,19 @@ module.exports.read = async (email) => {
     GROUP BY
       orders.created_at DESC
   `;
-  const orderValues = [email];
+  const values = [email];
 
-  // TODO - 도서 제목 목록은 주문 목록에서 상세보기를 했을 때만 뽑아낼까?
-  // const bookTitleSql = `
-  //   SELECT
-  //     items.book_id,
-  //     books.title
-  //   FROM
-  //     users
-  //   INNER JOIN orders
-  //     ON users.id = orders.user_id
-  //     AND users.email = ?
-  //   INNER JOIN order_items AS items
-  //     ON orders.id = items.order_id
-  //   INNER JOIN books
-  //     ON items.book_id = books.id
-  //   GROUP BY
-  //     book_id
-  //   ORDER BY
-  //     books.id
-  // `;
-  // const bookTitleValues = [email];
-
-  let userOrders;
-  // let bookTitles;
+  let results;
 
   try {
-    [userOrders] = await conn.promise().query(orderSql, orderValues);
-    // [bookTitles] = await conn.promise().query(bookTitleSql, bookTitleValues);
+    [results] = await conn.promise().query(sql, values);
   } catch (err) {
     // TODO - DB 에러
     return false;
   }
 
   return {
-    orders: userOrders.map((record) => ({
+    orders: results.map((record) => ({
       id: record.order_id,
       createdAt: record.order_created_at,
       receiver: {
@@ -85,6 +62,49 @@ module.exports.read = async (email) => {
       },
     })),
   };
+};
+
+module.exports.read = async (email, orderId) => {
+  const sql = `
+    SELECT
+      items.book_id AS book_id,
+      books.title AS title,
+      items.quantity AS quantity,
+      items.unit_price AS unit_price
+    FROM
+      users
+    INNER JOIN orders
+      ON users.id = orders.user_id
+      AND users.email = ?
+      AND orders.id = ?
+    INNER JOIN order_items AS items
+      ON orders.id = items.order_id
+    INNER JOIN books
+      ON items.book_id = books.id
+    ORDER BY
+      items.id
+  `;
+  const values = [email, orderId];
+
+  let results;
+
+  try {
+    [results] = await conn.promise().query(sql, values);
+  } catch (err) {
+    // TODO - DB 에러
+    return false;
+  }
+
+  if (!results?.length) {
+    return false;
+  }
+
+  return results.map((item) => ({
+    bookId: item.book_id,
+    title: item.title,
+    quantity: item.quantity,
+    unitPrice: item.unit_price,
+  }));
 };
 
 module.exports.create = async (email, data) => {

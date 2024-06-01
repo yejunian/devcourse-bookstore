@@ -118,6 +118,13 @@ module.exports = {
         validate,
       ],
     },
+    '/:orderId': {
+      GET: [
+        param('orderId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+      ],
+    },
   },
 
   'pending-orders': {
