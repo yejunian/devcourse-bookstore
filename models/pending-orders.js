@@ -85,6 +85,7 @@ module.exports.createItems = async (email, items, pendingOrderId) => {
       users
     INNER JOIN cart_items
       ON users.id = cart_items.user_id
+      AND users.email = ?
       AND cart_items.book_id IN (?)
     INNER JOIN books
       ON cart_items.book_id = books.id

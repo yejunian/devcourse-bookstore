@@ -1,7 +1,6 @@
 const express = require('express');
 const { StatusCodes } = require('http-status-codes');
 
-const { sendNotImplementedWith } = require('../middlewares/error-responses');
 const validators = require('../middlewares/validators');
 const authService = require('../services/auth');
 
@@ -23,12 +22,8 @@ authRouter
       });
     }
 
-    res.cookie('token', createdToken, { httpOnly: true });
-    return res.status(StatusCodes.CREATED).end();
+    return res.status(StatusCodes.CREATED).json({ token: createdToken });
   })
-
-  // TODO - 로그아웃 구현
-  .delete(sendNotImplementedWith('로그아웃'));
 
 authRouter
   .route('/reset-token')

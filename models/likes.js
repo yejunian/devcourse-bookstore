@@ -1,6 +1,6 @@
 const conn = require('../database/connect/mariadb');
 
-module.exports.readLikeCount = async (bookId, email) => {
+module.exports.readLike = async (bookId, email) => {
   const sql = `
     SELECT
       COUNT(*) AS like_count,
@@ -33,7 +33,7 @@ module.exports.readLikeCount = async (bookId, email) => {
 
   return {
     likes: results[0].like_count,
-    userLiked: results[0].user_liked,
+    userLiked: results[0].user_liked ? true : false,
   };
 };
 

@@ -1,8 +1,8 @@
 const likesModel = require('../models/likes');
 const usersModel = require('../models/users');
 
-module.exports.readLikeCount = async (bookId, email) => {
-  const result = await likesModel.readLikeCount(bookId, email);
+module.exports.readLike = async (bookId, email) => {
+  const result = await likesModel.readLike(bookId, email);
 
   return result;
 };

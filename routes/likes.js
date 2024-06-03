@@ -1,45 +1,24 @@
-const cookie = require('cookie');
 const express = require('express');
-const jwt = require('jsonwebtoken');
-
-const envConfig = require('../config/env');
-const likesService = require('../services/likes');
 const { StatusCodes } = require('http-status-codes');
+
+const jwtDecoder = require('../middlewares/jwt-decoder');
+const likesService = require('../services/likes');
 
 const likesRouter = express.Router();
 
 likesRouter
   .route('/:bookId')
 
-  .get(async (req, res) => {
-    const { token } = cookie.parse(req.headers.cookie);
-
-    let email;
-    try {
-      ({ email } = jwt.verify(token, envConfig.jwt.secret));
-    } catch (err) {
-      email = '';
-    }
-
+  .get(jwtDecoder.decode, async (req, res) => {
+    const email = req.auth?.token?.email;
     const bookId = parseInt(req.params.bookId);
-    const result = await likesService.readLikeCount(bookId, email);
+    const like = await likesService.readLike(bookId, email);
 
-    return res.status(StatusCodes.OK).json(result);
+    return res.status(StatusCodes.OK).json(like);
   })
 
-  .post(async (req, res) => {
-    const { token } = cookie.parse(req.headers.cookie);
-
-    let email;
-    try {
-      ({ email } = jwt.verify(token, envConfig.jwt.secret));
-    } catch (err) {
-      // TODO - 토큰 만료 메시지를 분리해야 할까?
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        reasons: ['header : unauthorized'],
-      });
-    }
-
+  .post(jwtDecoder.ensureAuthentication, async (req, res) => {
+    const email = req.auth?.token?.email;
     const bookId = parseInt(req.params.bookId);
     const success = await likesService.createLike(email, bookId);
 
@@ -53,19 +32,8 @@ likesRouter
     return res.status(StatusCodes.CREATED).end();
   })
 
-  .delete(async (req, res) => {
-    const { token } = cookie.parse(req.headers.cookie);
-
-    let email;
-    try {
-      ({ email } = jwt.verify(token, envConfig.jwt.secret));
-    } catch (err) {
-      // TODO - 토큰 만료 메시지를 분리해야 할까?
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        reasons: ['header : unauthorized'],
-      });
-    }
-
+  .delete(jwtDecoder.ensureAuthentication, async (req, res) => {
+    const email = req.auth?.token?.email;
     const bookId = parseInt(req.params.bookId);
     const success = await likesService.deleteLike(email, bookId);
 

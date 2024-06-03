@@ -178,8 +178,9 @@ module.exports.createItems = async (items, orderId) => {
       users
     INNER JOIN pending_orders
       ON users.id = pending_orders.user_id
+      AND pending_orders.id = ?
     INNER JOIN pending_order_items AS pending_items
-      ON pending_items.pending_order_id = ?
+      ON pending_orders.id = pending_items.pending_order_id
     INNER JOIN books
       ON pending_items.book_id = books.id
   `;

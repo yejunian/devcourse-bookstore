@@ -1,10 +1,8 @@
-const cookie = require('cookie');
 const express = require('express');
 const { StatusCodes } = require('http-status-codes');
-const jwt = require('jsonwebtoken');
 
-const envConfig = require('../config/env');
 const { sendNotImplementedWith } = require('../middlewares/error-responses');
+const jwtDecoder = require('../middlewares/jwt-decoder');
 const validators = require('../middlewares/validators');
 const cartService = require('../services/cart');
 
@@ -13,18 +11,8 @@ const cartRouter = express.Router();
 cartRouter
   .route('/')
 
-  .get(async (req, res) => {
-    const { token } = cookie.parse(req.headers.cookie);
-
-    let email;
-    try {
-      ({ email } = jwt.verify(token, envConfig.jwt.secret));
-    } catch (err) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        reasons: ['header : unauthorized'],
-      });
-    }
-
+  .get(jwtDecoder.ensureAuthentication, async (req, res) => {
+    const email = req.auth?.token?.email;
     const userCart = await cartService.readByEmail(email);
 
     if (!userCart?.items) {
@@ -43,33 +31,27 @@ cartRouter
     return res.status(StatusCodes.OK).json(userCart);
   })
 
-  .post(validators.cart['/'].POST, async (req, res) => {
-    const { token } = cookie.parse(req.headers.cookie);
+  .post(
+    validators.cart['/'].POST,
+    jwtDecoder.ensureAuthentication,
+    async (req, res) => {
+      const email = req.auth?.token?.email;
+      const item = {
+        bookId: req.body.bookId,
+        quantity: req.body.quantity,
+      };
+      const success = await cartService.createWithEmail(email, item);
 
-    let email;
-    try {
-      ({ email } = jwt.verify(token, envConfig.jwt.secret));
-    } catch (err) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        reasons: ['header : unauthorized'],
-      });
+      // TODO - 실패 원인 세분화
+      if (!success) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          reasons: ['body : bad request'],
+        });
+      }
+
+      return res.status(StatusCodes.CREATED).end();
     }
-
-    const item = {
-      bookId: req.body.bookId,
-      quantity: req.body.quantity,
-    };
-    const success = await cartService.createWithEmail(email, item);
-
-    // TODO - 실패 원인 세분화
-    if (!success) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        reasons: ['body : bad request'],
-      });
-    }
-
-    return res.status(StatusCodes.CREATED).end();
-  });
+  );
 
 cartRouter
   .route('/:cartItemId')

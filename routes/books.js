@@ -1,9 +1,7 @@
-const cookie = require('cookie');
 const express = require('express');
 const { StatusCodes } = require('http-status-codes');
-const jwt = require('jsonwebtoken');
 
-const envConfig = require('../config/env');
+const jwtDecoder = require('../middlewares/jwt-decoder');
 const validators = require('../middlewares/validators');
 const booksService = require('../services/books');
 
@@ -42,26 +40,22 @@ booksRouter
 booksRouter
   .route('/:bookId')
 
-  .get(validators.books['/:bookId'].GET, async (req, res) => {
-    const { token } = cookie.parse(req.headers.cookie);
+  .get(
+    validators.books['/:bookId'].GET,
+    jwtDecoder.decode,
+    async (req, res) => {
+      const bookId = parseInt(req.params.bookId);
+      const email = req.auth?.token?.email;
+      const book = await booksService.read(bookId, email);
 
-    let email;
-    try {
-      ({ email } = jwt.verify(token, envConfig.jwt.secret));
-    } catch (err) {
-      email = '';
+      if (!book) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          reasons: ['params.bookId : not found'],
+        });
+      }
+
+      return res.status(StatusCodes.OK).json(book);
     }
-
-    const bookId = parseInt(req.params.bookId);
-    const book = await booksService.read(bookId, email);
-
-    if (!book) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        reasons: ['params.bookId : not found'],
-      });
-    }
-
-    return res.status(StatusCodes.OK).json(book);
-  });
+  );
 
 module.exports = booksRouter;
