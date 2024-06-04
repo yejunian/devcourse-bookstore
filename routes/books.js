@@ -13,7 +13,7 @@ booksRouter
   .get(validators.books['/'].GET, async (req, res) => {
     const query = {
       keyword: req.query.keyword || undefined,
-      category: req.query.category || undefined,
+      category: parseInt(req.query.category) || undefined,
       isNew: req.query.new === 'true',
       page: parseInt(req.query.page) || undefined,
       pageSize: parseInt(req.query['page-size']) || undefined,

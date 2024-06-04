@@ -1,9 +1,10 @@
 const conn = require('../database/connect/mariadb');
 
-const isNewComparison = 'DATEDIFF(NOW(), b.pub_date) <= 30';
-const categoryComparison = 'b.category = ?';
-const orderByPubDate = 'ORDER BY b.pub_date DESC';
+const isNewComparison = 'DATEDIFF(NOW(), books.pub_date) <= 30';
+const categoryComparison = 'books.category = ?';
+const orderByPubDate = 'ORDER BY books.pub_date DESC';
 
+// TODO - 도서 검색
 module.exports.readPage = async ({
   keyword,
   category,
@@ -12,46 +13,51 @@ module.exports.readPage = async ({
   pageSize = 8,
 }) => {
   const contentSqlFragments = [
-    `SELECT
-      b.*,
-      i.url AS thumbnail_url,
-      (SELECT
-          COUNT(*)
-        FROM
-          likes
-        WHERE
-          likes.book_id = b.id) AS like_count
-    FROM
-      books AS b
-        LEFT JOIN
-      book_images AS i ON b.thumbnail_id = i.id`,
+    `
+      SELECT
+        books.*,
+        book_images.url AS thumbnail_url,
+        (
+          SELECT
+            COUNT(*)
+          FROM
+            likes
+          WHERE
+            likes.book_id = books.id
+        ) AS like_count
+      FROM
+        books
+      LEFT JOIN
+        book_images
+        ON books.thumbnail_id = book_images.id
+    `,
   ];
   const contentSqlValue = [];
 
   if (isNew && category) {
-    contentSqlFragments.push(
-      `WHERE
+    contentSqlFragments.push(`
+      WHERE
         ${isNewComparison}
-          AND ${categoryComparison}
-      ${orderByPubDate}`
-    );
+        AND ${categoryComparison}
+      ${orderByPubDate}
+    `);
     contentSqlValue.push(category);
   } else if (isNew) {
-    contentSqlFragments.push(
-      `WHERE
+    contentSqlFragments.push(`
+      WHERE
         ${isNewComparison}
-      ${orderByPubDate}`
-    );
+      ${orderByPubDate}
+    `);
   } else if (category) {
-    contentSqlFragments.push(
-      `WHERE
-        ${categoryComparison}`
-    );
+    contentSqlFragments.push(`
+      WHERE
+        ${categoryComparison}
+    `);
     contentSqlValue.push(category);
   }
 
   const countSqlFragments = [...contentSqlFragments];
-  countSqlFragments[0] = 'SELECT COUNT(id) AS cnt FROM books AS b';
+  countSqlFragments[0] = 'SELECT COUNT(id) AS cnt FROM books';
   const countSqlValue = [...contentSqlValue];
 
   contentSqlFragments.push(`LIMIT ? OFFSET ?`);
@@ -93,29 +99,37 @@ module.exports.readPage = async ({
 module.exports.read = async (bookId, email) => {
   const sql = `
     SELECT
-      b.*,
-      i.url AS thumbnail_url,
-      (SELECT
+      books.*,
+      book_images.url AS thumbnail_url,
+      (
+        SELECT
           COUNT(*)
         FROM
           likes
         WHERE
-          book_id = ?) AS like_count,
-      (EXISTS( SELECT
-          *
-        FROM
-          likes AS l
-            LEFT JOIN
-          users AS u ON u.email = ?
-        WHERE
-          l.user_id = u.id AND book_id = ?)) AS user_liked
+          book_id = ?
+      ) AS like_count,
+      (
+        EXISTS(
+          SELECT
+            *
+          FROM
+            likes
+          INNER JOIN
+            users
+            ON users.email = ?
+            AND likes.user_id = users.id AND book_id = ?
+        )
+      ) AS user_liked
     FROM
-      books AS b
-        LEFT JOIN
-      book_images AS i ON b.thumbnail_id = i.id
+      books
+    LEFT JOIN
+      book_images
+      ON books.thumbnail_id = book_images.id
     WHERE
-      b.id = ?
-    LIMIT 1`;
+      books.id = ?
+    LIMIT 1
+  `;
   const values = [bookId, email, bookId, bookId];
 
   let results;
@@ -159,7 +173,9 @@ module.exports.readImagesByBookId = async (bookId) => {
       book_images
     WHERE
       book_id = ?
-    ORDER BY priority ASC`;
+    ORDER BY
+      priority ASC
+  `;
   const values = [bookId];
 
   let results;
