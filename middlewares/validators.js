@@ -81,6 +81,23 @@ module.exports = {
         validate,
       ],
     },
+    '/:bookId': {
+      PUT: [
+        param('bookId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        body('quantity')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        validate,
+      ],
+      DELETE: [
+        param('bookId')
+          .isInt({ min: 1 })
+          .withMessage(errorMessages.isPositiveInt),
+        validate,
+      ],
+    },
   },
 
   likes: {

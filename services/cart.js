@@ -17,3 +17,15 @@ module.exports.createWithEmail = async (email, item) => {
 
   return success;
 };
+
+module.exports.updateWithEmail = async (email, bookId, quantity) => {
+  const success = await cartModel.updateWithEmail(email, bookId, quantity);
+
+  return success;
+};
+
+module.exports.deleteWithEmail = async (email, bookId) => {
+  const success = await cartModel.deleteWithEmail(email, bookId);
+
+  return success;
+};

@@ -68,6 +68,73 @@ module.exports.createWithEmail = async (email, item) => {
   return results.affectedRows !== 0;
 };
 
+module.exports.updateWithEmail = async (email, bookId, quantity) => {
+  const sql = `
+    UPDATE
+      cart_items
+    INNER JOIN
+      users
+      ON users.id = cart_items.user_id
+      AND users.email = ?
+    INNER JOIN
+      books
+      ON books.id = cart_items.book_id
+      AND books.id = ?
+    SET
+      cart_items.count = ?
+  `;
+  const values = [email, bookId, quantity];
+
+  let result;
+
+  try {
+    [result] = await conn.promise().query(sql, values);
+  } catch (err) {
+    // TODO - DB 에러
+    return false;
+  }
+
+  if (!result?.affectedRows) {
+    // TODO - 수정할 항목이 없음: 다른 사용자의 것인지, 내 것인데 없는 건지는 모름
+    return false;
+  }
+
+  return result.affectedRows > 0;
+};
+
+module.exports.deleteWithEmail = async (email, bookId) => {
+  const sql = `
+    DELETE cart_items
+    FROM
+      cart_items
+    INNER JOIN
+      users
+      ON users.id = cart_items.user_id
+      AND users.email = ?
+    INNER JOIN
+      books
+      ON books.id = cart_items.book_id
+      AND books.id = ?
+  `;
+  const values = [email, bookId];
+
+  let result;
+
+  try {
+    [result] = await conn.promise().query(sql, values);
+  } catch (err) {
+    // TODO - DB 에러
+    return false;
+  }
+
+  if (!result?.affectedRows) {
+    // TODO - 삭제할 항목이 없음: 다른 사용자의 것인지, 내 것인데 없는 건지는 모름
+    return false;
+  }
+
+  return result.affectedRows > 0;
+};
+
 module.exports.deleteOrdered = async (pendingOrderId) => {
   const sql = `
     DELETE cart_items
@@ -85,10 +152,8 @@ module.exports.deleteOrdered = async (pendingOrderId) => {
   `;
   const values = [pendingOrderId];
 
-  let results;
-
   try {
-    [results] = await conn.promise().query(sql, values);
+    await conn.promise().query(sql, values);
   } catch (err) {
     // TODO - DB 에러
     return false;

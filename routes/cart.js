@@ -1,7 +1,6 @@
 const express = require('express');
 const { StatusCodes } = require('http-status-codes');
 
-const { sendNotImplementedWith } = require('../middlewares/error-responses');
 const jwtDecoder = require('../middlewares/jwt-decoder');
 const validators = require('../middlewares/validators');
 const cartService = require('../services/cart');
@@ -54,12 +53,49 @@ cartRouter
   );
 
 cartRouter
-  .route('/:cartItemId')
+  .route('/:bookId')
 
-  // TODO - 개별 회원의 장바구니 항목 개별 수정 구현
-  .put(sendNotImplementedWith('개별 회원의 장바구니 항목 개별 수정'))
+  .put(
+    validators.cart['/:bookId'].PUT,
+    jwtDecoder.ensureAuthentication,
+    async (req, res) => {
+      const email = req.auth?.token?.email;
+      const bookId = parseInt(req.params.bookId);
+      const { quantity } = req.body;
+      const success = await cartService.updateWithEmail(
+        email,
+        bookId,
+        quantity
+      );
 
-  // TODO - 개별 회원의 장바구니 항목 개별 삭제 구현
-  .delete(sendNotImplementedWith('개별 회원의 장바구니 항목 개별 삭제'));
+      // TODO - 실패 원인 세분화
+      if (!success) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          reasons: ['body : bad request'],
+        });
+      }
+
+      return res.status(StatusCodes.OK).end();
+    }
+  )
+
+  .delete(
+    validators.cart['/:bookId'].DELETE,
+    jwtDecoder.ensureAuthentication,
+    async (req, res) => {
+      const email = req.auth?.token?.email;
+      const bookId = parseInt(req.params.bookId);
+      const success = await cartService.deleteWithEmail(email, bookId);
+
+      // TODO - 실패 원인 세분화
+      if (!success) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          reasons: ['body : bad request'],
+        });
+      }
+
+      return res.status(StatusCodes.OK).end();
+    }
+  );
 
 module.exports = cartRouter;
