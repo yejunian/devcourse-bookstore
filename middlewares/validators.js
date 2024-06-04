@@ -1,6 +1,5 @@
-const { body, param, query } = require('express-validator');
-
-const validate = require('./validate');
+const { body, param, query, validationResult } = require('express-validator');
+const { StatusCodes } = require('http-status-codes');
 
 const paymentTypes = ['card', 'mobile-payment', 'without-bankbook'];
 
@@ -10,8 +9,22 @@ const errorMessages = {
   isNonNegativeInt: 'not non-negative integer',
   isPaymentType: `not in ["${paymentTypes.join('", "')}"]`,
   isPositiveInt: 'not positive integer',
-  isString: 'not string',
-  notEmpty: 'omitted',
+  isTruthyString: 'not truthy string',
+  notEmpty: 'is empty',
+};
+
+const validate = (req, res, next) => {
+  const err = validationResult(req);
+
+  if (err.isEmpty()) {
+    return next();
+  } else {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      reasons: err
+        .array()
+        .map(({ location, path, msg }) => `${location}.${path} : ${msg}`),
+    });
+  }
 };
 
 module.exports = {
@@ -19,11 +32,7 @@ module.exports = {
     '/token': {
       POST: [
         body('email').isEmail().withMessage(errorMessages.isEmail),
-        body('password')
-          .isString()
-          .withMessage(errorMessages.isString)
-          .notEmpty()
-          .withMessage(errorMessages.notEmpty),
+        body('password').matches(/./).withMessage(errorMessages.isTruthyString),
         validate,
       ],
     },
@@ -99,16 +108,13 @@ module.exports = {
 
   orders: {
     '/': {
-      // GET: [],
       POST: [
         body('pendingOrderId')
           .isInt({ min: 1 })
           .withMessage(errorMessages.isPositiveInt),
         body(['receiver.address', 'receiver.name', 'receiver.phone'])
-          .isString()
-          .withMessage(errorMessages.isString)
-          .notEmpty()
-          .withMessage(errorMessages.notEmpty),
+          .matches(/./)
+          .withMessage(errorMessages.isTruthyString),
         body('payment.type')
           .isIn(paymentTypes)
           .withMessage(errorMessages.isPaymentType),
@@ -150,20 +156,12 @@ module.exports = {
     '/': {
       POST: [
         body('email').isEmail().withMessage(errorMessages.isEmail),
-        body('password')
-          .isString()
-          .withMessage(errorMessages.isString)
-          .notEmpty()
-          .withMessage(errorMessages.notEmpty),
+        body('password').matches(/./).withMessage(errorMessages.isTruthyString),
         validate,
       ],
       PUT: [
         body('email').isEmail().withMessage(errorMessages.isEmail),
-        body('password')
-          .isString()
-          .withMessage(errorMessages.isString)
-          .notEmpty()
-          .withMessage(errorMessages.notEmpty),
+        body('password').matches(/./).withMessage(errorMessages.isTruthyString),
         validate,
       ],
     },
