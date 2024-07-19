@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 
 const envConfig = require('./config/env');
 const { sendNotFound } = require('./middlewares/error-responses');
@@ -14,6 +15,12 @@ const usersRouter = require('./routes/users');
 
 const app = express();
 
+app.use(
+  cors({
+    origin: 'http://localhost:3001',
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use('/auth', authRouter);
