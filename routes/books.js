@@ -16,7 +16,7 @@ booksRouter
       category: parseInt(req.query.category) || undefined,
       isNew: req.query.new === 'true',
       page: parseInt(req.query.page) || undefined,
-      pageSize: parseInt(req.query['page-size']) || undefined,
+      pageSize: parseInt(req.query.limit) || undefined,
     };
 
     const result = await booksService.readPage(query);

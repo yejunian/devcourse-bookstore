@@ -75,12 +75,11 @@ module.exports.readPage = async ({
     return false;
   }
 
-  const totalCount = countResults[0].cnt;
+  const total = countResults[0].cnt;
 
   return {
-    totalCount,
-    page: {
-      total: Math.ceil(totalCount / pageSize),
+    pagination: {
+      total,
       current: page,
     },
     books: contentResults.map((record) => ({

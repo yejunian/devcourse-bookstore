@@ -55,7 +55,7 @@ module.exports = {
           .optional()
           .isBoolean()
           .withMessage(errorMessages.isBoolean),
-        query('page', 'page-size')
+        query('page', 'limit')
           .optional()
           .isInt({ min: 1 })
           .withMessage(errorMessages.isPositiveInt),
