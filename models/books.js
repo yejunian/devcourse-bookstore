@@ -99,6 +99,7 @@ module.exports.read = async (bookId, email) => {
   const sql = `
     SELECT
       books.*,
+      book_categories.name AS category_name,
       book_images.url AS thumbnail_url,
       (
         SELECT
@@ -108,20 +109,21 @@ module.exports.read = async (bookId, email) => {
         WHERE
           book_id = ?
       ) AS like_count,
-      (
-        EXISTS(
-          SELECT
-            *
-          FROM
-            likes
-          INNER JOIN
-            users
-            ON users.email = ?
-            AND likes.user_id = users.id AND book_id = ?
-        )
+      EXISTS(
+        SELECT
+          *
+        FROM
+          likes
+        INNER JOIN
+          users
+          ON users.email = ?
+          AND likes.user_id = users.id AND book_id = ?
       ) AS user_liked
     FROM
       books
+    INNER JOIN
+      book_categories
+      ON books.category = book_categories.id
     LEFT JOIN
       book_images
       ON books.thumbnail_id = book_images.id
@@ -148,13 +150,16 @@ module.exports.read = async (bookId, email) => {
   const bookRecord = results[0];
 
   return {
+    id: bookRecord.id,
     title: bookRecord.title,
-    category: bookRecord.category,
+    categoryId: bookRecord.category,
+    categoryName: bookRecord.category_name,
     form: bookRecord.form,
     author: bookRecord.author,
     isbn: bookRecord.isbn,
     pages: bookRecord.pages,
     price: bookRecord.price,
+    pubDate: bookRecord.pub_date,
     likes: bookRecord.like_count,
     userLiked: bookRecord.user_liked === 1,
     thumbnail: bookRecord.thumbnail_url,
